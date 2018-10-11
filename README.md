@@ -1,7 +1,7 @@
 # DiscordChroma
 a windows app that enables discord events to trigger razer chroma lighting on supported devices
 
-# all development to this project has been stoped, this repository is only here for someone else to continue if they so whish.
+# all development to this project has been stoped, this repository is only here for someone else to continue if they so wish.
 
 Note: "selfbot's" (which is used here for connecting to discord) are against Discord their ToS,
 there is a very small change that you get banned.
