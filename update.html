@@ -1,0 +1,61 @@
+<style>
+  @keyframes rainbowbackground {
+    0%{background-position:90% 0%}
+    50%{background-position:0% 85%}
+    100%{background-position:90% 0%}
+}
+
+  body {
+    font-family: system, -apple-system, '.SFNSText-Regular', 'SF UI Text', 'Lucida Grande', 'Segoe UI', Ubuntu, Cantarell, sans-serif;
+    color: #fff;
+    text-align: center;
+    font-size: 40px;
+    background: linear-gradient(200deg, #00ff00, #7289DA, #000000, #000000);
+    background-size: 2000% 2000%;
+
+    animation: rainbowbackground 15s ease infinite;
+    animation-fill-mode: forwards; 
+    -webkit-app-region: drag;
+  }
+  
+  #loading {
+    padding: 0;
+    margin: 0;
+    position: fixed;
+    bottom: 10%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 40;
+  }
+
+  #title {
+    padding: 0;
+    margin: 0;
+    position: fixed;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 40;
+  }
+
+  #dev {
+    padding: 0;
+    margin: 0;
+    position: fixed;
+    font-size: 20px;
+    top: 63%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  img {
+    position: fixed;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  
+</style>
+  <img src="img/logo.png">
+  <h2 id="title">update downloaded</h2>
+  <h2 id="loading">restarting to install update...</h2>

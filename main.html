@@ -1,0 +1,94 @@
+<style>
+  @keyframes rainbowbackground {
+    0%{background-position:90% 0%}
+    50%{background-position:0% 85%}
+    100%{background-position:90% 0%}
+}
+
+  body {
+    font-family: system, -apple-system, '.SFNSText-Regular', 'SF UI Text', 'Lucida Grande', 'Segoe UI', Ubuntu, Cantarell, sans-serif;
+    color: #fff;
+    text-align: center;
+    font-size: 40px;
+    background: linear-gradient(200deg, #00ff00,#00adff,#ff0000);
+    background-size: 2000% 2000%;
+
+    animation: rainbowbackground 20s ease infinite;
+    animation-fill-mode: forwards; 
+    -webkit-app-region: drag;
+  }
+
+  a {
+    color: white;
+  }
+  
+  #loading {
+    padding: 0;
+    margin: 0;
+    position: fixed;
+    bottom: 00%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  #title {
+    padding: 0;
+    margin: 0;
+    position: fixed;
+    top: 65%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  #dev {
+    padding: 0;
+    margin: 0;
+    position: fixed;
+    font-size: 20px;
+    top: 71%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  #updatenote {
+    padding: 0;
+    margin: 0;
+    position: fixed;
+    font-size: 20px;
+    top: 78%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    -webkit-app-region: no-drag;
+  }
+
+  img {
+    position: fixed;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  video {
+    position: fixed;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  
+</style>
+  
+  <!--<h2>Welcome to Discord-Chroma By DELUUXE<br>-->
+  <!--<img src="img/logo.png">-->
+  <video autoplay loop>
+    <source src="img/DiscordChroma loading.webm" type="video/webm">
+  </video>
+  <h2 id="title">DiscordChroma</h2>
+  <h2 id="dev">Version 0.3.0</h2>
+  <h2 id="updatenote">Use at your own risk - read <a id="link" href="#">THIS</a> before use</h2>
+  <h2 id="loading">Loading...</h2>
+  <script>
+    var open = require("open");
+    document.getElementById("link").addEventListener("click", ()=>{
+      open("https://github.com/DELUUXE/DiscordChroma/blob/master/README.md");
+    })
+  </script>

@@ -1,0 +1,149 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<style>
+
+    @keyframes rainbowbackground {
+        0%{background-position:90% 0%}
+        50%{background-position:0% 85%}
+        100%{background-position:90% 0%}
+    }
+
+    body {
+        font-family: system, -apple-system, '.SFNSText-Regular', 'SF UI Text', 'Lucida Grande', 'Segoe UI', Ubuntu, Cantarell, sans-serif;
+        text-align: center;
+        background: linear-gradient(200deg, #00ff00, #00adff, #ff0000);
+        background-size: 2000% 2000%;
+        animation: rainbowbackground 20s ease infinite;
+        animation-fill-mode: forwards; 
+        -webkit-app-region: drag;
+        display: flex;
+        flex-direction: column;
+        align-content: center;
+        align-items: center;
+    }
+
+    .container {
+        background-color: white;
+        width: 99%;
+        height: 99%;   
+    }
+
+    .text {
+        background: linear-gradient(200deg, #00ff00, #00adff, #ff0000);
+        background-size: 2000% 2000%;
+        animation: rainbowbackground 20s ease infinite;
+        animation-fill-mode: forwards; 
+        -webkit-text-fill-color: transparent;
+        -webkit-background-clip: text;
+        width: 98%;
+        height: 98%;
+    }
+
+    button {
+        color: white;
+        width: 200px;
+        height: 40px;
+        background: linear-gradient(200deg, #00ff00, #00adff, #ff0000);
+        background-size: 2000% 2000%;
+        animation: rainbowbackground 20s ease infinite;
+        animation-fill-mode: forwards; 
+        -webkit-text-fill-color: initial;
+        font-size: 25px;
+        margin: 0px;
+        border: 0px;
+        transition-duration: 0.3s;
+        -webkit-app-region: no-drag;
+    }
+
+    button:hover {
+        background: linear-gradient(200deg, #00ff0036, #00aeff25, #ff000059);
+        background-size: 2000% 2000%;
+        animation: rainbowbackground 20s ease infinite;
+        animation-fill-mode: forwards; 
+    }
+
+    button:active{
+        background: linear-gradient(200deg, #00ff00, #00ff00, #00ff00);
+        background-size: 2000% 2000%;
+        animation: rainbowbackground 20s ease infinite;
+        animation-fill-mode: forwards; 
+    }
+
+    #colorpicker{
+        color: black;
+        width: 200px;
+        height: 40px; 
+        -webkit-text-fill-color: initial;
+        font-size: 25px;
+        transition-duration: 0.3s;
+        text-align: center;
+        border: solid black 2px;
+        -webkit-app-region: no-drag;
+    }
+
+</style>
+
+<!-- to make jquery work in electron -->
+<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>        
+<script>if (window.module) module = window.module;</script>
+<script>const {ipcRenderer} = require('electron');</script>
+
+<body>
+    <div class="container">
+        <div class="text">
+            <h1>DiscordChroma Settings</h1>
+            <br>
+            <h2>General</h2>
+            <p>Logout or change discord acount</p>
+            <button type="button" id="resetautologin">Logout</button>
+            <script>
+                $( "#resetautologin" ).click(function() {
+                    ipcRenderer.send('asynchronous-message', 'logout');
+                    window.close();
+                });
+                $( "#toggleAutoStart" ).click(function() {
+                    ipcRenderer.send('asynchronous-message', 'toggleAutoStart');
+                    if(document.getElementById("toggleAutoStart").innerText == "Turn on"){
+                        document.getElementById("toggleAutoStart").innerText = "Turn off";
+                    } else {
+                        document.getElementById("toggleAutoStart").innerText = "Turn on";
+                    }
+                });
+                ipcRenderer.on('autoStartToggled', (event, arg) => {
+                    document.getElementById("toggleAutoStart").disabled = false; 
+                    document.getElementById("toggleAutoStart").innerText = arg;
+                });
+            </script>
+            <br>
+            <!--<h2>Start on boot</h2>
+            <p>Start DiscordChroma on system boot.</p>
+            <button id="toggleAutoStart" disabled>Status loading...</button>-->
+            <!--<p>Message alert color (hex color (without #)) (not working yet)</p>
+            <input type="text" value="ffffff" name="Message color" maxlength="6" id="colorpicker">
+            <button id="confirmmsgcolor">Confirm color</button>
+            <script>
+                $("#colorpicker").on("change paste keyup", function() { 
+                    var messagecolor = document.getElementById("colorpicker").value;
+                    $('#colorpicker').css('background-color', messagecolor);
+                });    
+                $( "#confirmmsgcolor" ).click(function() {
+                    var messagecolor = document.getElementById("colorpicker").value;
+                    ipcRenderer.send('asynchronous-message', "msgcolor", messagecolor);
+                });
+            </script>-->
+            <br>
+            <button style="margin-top:80px" id="exitbutton">Exit the app</button>
+            <button style="margin-top:80px" id="closesettings">Close settings</button>
+            <script>  
+                $( "#exitbutton" ).click(function() {
+                    ipcRenderer.send('asynchronous-message', "exitapp");
+                    window.close();
+                });
+                $( "#closesettings" ).click(function() {
+                    //ipcRenderer.send('asynchronous-message', "closesettings");
+                    window.close();
+                });
+            </script>
+        </div>
+    </div>
+</body>
