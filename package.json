@@ -23,19 +23,11 @@
       "oneClick": false,
       "perMachine": true,
       "allowToChangeInstallationDirectory": true
-    },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "DELUUXE",
-        "repo": "DiscordChroma"
-      }
-    ]
+    }
   },
   "scripts": {
     "start": "electron .",
-    "pack": "build --dir",
-    "publish": "build --win -p always"
+    "pack": "build --dir"
   },
   "dependencies": {
     "@chroma-cloud/chromajs": "^0.1.21",
