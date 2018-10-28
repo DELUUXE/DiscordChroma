@@ -9,3 +9,11 @@ BUT thats not very likely because it only listens for events and doesn't do anyt
 and my app would fall outside of their statement here Discord Support page,
 judge for your self.
 You have been warned.
+
+## building (if you want to continue development)
+
+run ``npm run build`` in cmd/powershell\
+
+## installing (if you just want to install)
+
+run the .exe setup from the releases tab
