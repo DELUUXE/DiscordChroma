@@ -119,7 +119,15 @@ app.on('ready', function () {
         tray.setToolTip('DiscordChroma (click to open settings)');
         //tray.setContextMenu(contextMenu);
         tray.on('click', () => {
-            let settingswin = new BrowserWindow({ width: 800, height: 500, frame: false, resizable: false });
+            let settingswin = new BrowserWindow({
+                width: 1000,
+                height: 600,
+                frame: false,
+                resizable: false,
+                webPreferences: {
+                    nodeIntegration: true
+                }
+            })
             settingswin.loadURL(path.join('file://', __dirname, '/settings.html'));
             /*var AutoLauncher = new AutoLaunch({
                 name: 'DiscordChroma'
@@ -183,8 +191,8 @@ function auth() {
                 log.info(response);
                 if (response == "the user clicked on the toast.") {
                     let settingswin = new BrowserWindow({
-                        width: 800,
-                        height: 500,
+                        width: 1000,
+                        height: 600,
                         frame: false,
                         resizable: false,
                         webPreferences: {
