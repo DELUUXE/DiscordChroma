@@ -280,7 +280,14 @@ function auth() {
     });
     // ---------------------------------------- END discord.js ERROR section -------------------------------- \\
 
-    client.login({ clientId: clientID, scopes: ['identify', 'rpc.notifications.read', 'rpc'], redirectUri: 'http://localhost:1608/rzr-discord-chroma-callback' }).catch(console.error)
+    client.login({ clientId: clientID, scopes: ['identify', 'rpc.notifications.read', 'rpc'], redirectUri: 'http://localhost:1608/rzr-discord-chroma-callback' }).catch((e) => {
+        log.error(e);
+        let errorwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
+        errorwin.loadURL(path.join('file://', __dirname, '/error.html'));
+        errorwin.on('closed', function () {
+            app.exit()
+        })
+    })
 }
 
 
