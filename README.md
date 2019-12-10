@@ -1,19 +1,29 @@
-# DiscordChroma
-a windows app that enables discord events to trigger razer chroma lighting on supported devices
+# DiscordChroma ![Logo](https://i.imgur.com/fRpCwBf.png=10px "DiscordChroma")
 
-# all development to this project has been stoped, this repository is only here for someone else to continue if they so wish.
+This is an unofficial discord integration for razer chroma products.
+Still in development.
 
-Note: "selfbot's" (which is used here for connecting to discord) are against Discord their ToS,
-there is a very small change that you get banned.
-BUT thats not very likely because it only listens for events and doesn't do anything else in discord it self.
-and my app would fall outside of their statement here Discord Support page,
-judge for your self.
-You have been warned.
+## IMPORTANT
+This application uses the discord RPC api which is currently whitelist only, that means that you cannot use this application without changing the discord client id.
+(until discord allows me access to the RPC api)
 
-## building (if you want to continue development)
+## Features
 
-run ``npm run build`` in cmd/powershell\
+- auto updates
+- animations for discord notifications (more animations to come)
+- once running you won't even notice that its there (your normal chroma profiles will be active until a discord event is received)
 
-## installing (if you just want to install)
+## How to install
 
-run the .exe setup from the releases tab
+~~Download installer from the releases page~~
+builds will not work unless manually added to the whitelist by DELUUXE
+
+## How to uninstall
+
+Once installed it's in your programs list, you can uninstall it from there or go to appdata/local/programs/DiscordChroma and run the uninstaller
+
+
+### Created by DELUUXE
+
+#### Special thanks to:
+- WolfspiritM (github and razer insider)
