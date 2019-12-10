@@ -397,11 +397,19 @@ async function messageAnimation() {
     for (i; i < 3; i++) {
         for (r; r < 255; r++) {
             instance.Mouse.setAll(new Color(0, 0, r));
+            instance.Mousepad.setAll(new Color(0, 0, r));
+            instance.ChromaLink.setAll(new Color(0, 0, r));
+            instance.Headset.setAll(new Color(0, 0, r));
+            instance.Keypad.setAll(new Color(0, 0, r));
             await instance.send();
             await sleep(1);
         }
         for (r; r > 0; r--) {
             instance.Mouse.setAll(new Color(0, 0, r));
+            instance.Mousepad.setAll(new Color(0, 0, r));
+            instance.ChromaLink.setAll(new Color(0, 0, r));
+            instance.Headset.setAll(new Color(0, 0, r));
+            instance.Keypad.setAll(new Color(0, 0, r));
             await instance.send();
             await sleep(1);
         }
