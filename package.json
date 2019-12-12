@@ -1,6 +1,6 @@
 {
   "name": "DiscordChroma",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Discord Chroma",
   "main": "main.js",
   "author": "DELUUXE",
@@ -19,6 +19,13 @@
         }
       ]
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "DELUUXE",
+        "repo": "DiscordChroma"
+      }
+    ],
     "nsis": {
       "oneClick": false,
       "perMachine": true,
@@ -34,12 +41,13 @@
   "dependencies": {
     "@chroma-cloud/chromajs": "^0.1.21",
     "auto-launch": "^5.0.5",
+    "discord-rich-presence": "0.0.8",
     "discord-rpc": "^3.1.0",
     "electron-log": "^4.0.0",
     "electron-remote": "^1.2.0",
     "electron-updater": "^4.2.0",
     "node-fetch": "^2.0.0",
-    "node-notifier": "^6.0.0"
+    "node-notifier": "^5.4.3"
   },
   "devDependencies": {
     "electron": "^7.1.3",
