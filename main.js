@@ -134,17 +134,19 @@ app.on('ready', function () {
             settingswin.loadURL(path.join('file://', __dirname, '/settings.html'))
             settingswin.on('closed', () => {
                 DiscordRPsettings.kill()
-                var notifier = new WindowsToaster({
-                    withFallback: false, // Fallback to Growl or Balloons?
-                })
-                notifier.notify({
-                    title: 'Running in the background',
-                    message: 'To open the settings, click on the taskbar icon',
-                    icon: path.join(app.getPath(`userData`), 'logo.png'),
-                    sound: false, // Bool | String (as defined by http://msdn.microsoft.com/en-us/library/windows/apps/hh761492.aspx)
-                    wait: true, // Bool. Wait for User Action against Notification or times out
-                    appID: "com.deluuxe.DiscordChroma",
-                })
+                if (!isClosing) {
+                    var notifier = new WindowsToaster({
+                        withFallback: false, // Fallback to Growl or Balloons?
+                    })
+                    notifier.notify({
+                        title: 'Running in the background',
+                        message: 'To open the settings, click on the taskbar icon',
+                        icon: path.join(app.getPath(`userData`), 'logo.png'),
+                        sound: false, // Bool | String (as defined by http://msdn.microsoft.com/en-us/library/windows/apps/hh761492.aspx)
+                        wait: true, // Bool. Wait for User Action against Notification or times out
+                        appID: "com.deluuxe.DiscordChroma",
+                    })
+                }
             })
             /*var AutoLauncher = new AutoLaunch({
                 name: 'DiscordChroma'
@@ -260,18 +262,20 @@ function initDiscord() {
                     settingswin.loadURL(path.join('file://', __dirname, '/settings.html'))
                     settingswin.on('closed', () => {
                         DiscordRPsettings.kill('SIGINT')
-                        var notifier = new WindowsToaster({
-                            withFallback: false, // Fallback to Growl or Balloons?
-                        })
-                        notifier.notify({
-                            title: 'Connected to discord',
-                            message: 'running in the background',
-                            icon: path.join(app.getPath(`userData`), 'logo.png'),
-                            sound: false, // Bool | String (as defined by http://msdn.microsoft.com/en-us/library/windows/apps/hh761492.aspx)
-                            wait: true, // Bool. Wait for User Action against Notification or times out
-                            timeout: 5,
-                            appID: "com.deluuxe.DiscordChroma",
-                        })
+                        if (!isClosing) {
+                            var notifier = new WindowsToaster({
+                                withFallback: false, // Fallback to Growl or Balloons?
+                            })
+                            notifier.notify({
+                                title: 'Connected to discord',
+                                message: 'running in the background',
+                                icon: path.join(app.getPath(`userData`), 'logo.png'),
+                                sound: false, // Bool | String (as defined by http://msdn.microsoft.com/en-us/library/windows/apps/hh761492.aspx)
+                                wait: true, // Bool. Wait for User Action against Notification or times out
+                                timeout: 5,
+                                appID: "com.deluuxe.DiscordChroma",
+                            })
+                        }
                     })
                     /*var AutoLauncher = new AutoLaunch({
                         name: 'DiscordChroma'
@@ -385,6 +389,12 @@ function authDiscord() {
                 if (response == 'the user clicked on the toast.') {
                     authDiscord()
                 }
+            })
+        } else {
+            let errorwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
+            errorwin.loadURL(path.join('file://', __dirname, '/error.html'));
+            errorwin.on('closed', function () {
+                app.exit()
             })
         }
     })
