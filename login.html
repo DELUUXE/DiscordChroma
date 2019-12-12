@@ -4,6 +4,9 @@
         src: url('zrnic.ttf');
     }
 
+    :root {
+        --windowBarHeight: 30px;
+    }
 
     @keyframes rainbowbackground {
         0% {
@@ -19,10 +22,6 @@
         }
     }
 
-    html {
-        /*-webkit-app-region: drag;*/
-    }
-
     body {
         font-family: system, -apple-system, '.SFNSText-Regular', 'SF UI Text', 'Lucida Grande', 'Segoe UI', Ubuntu, Cantarell, sans-serif;
         color: #fff;
@@ -34,23 +33,27 @@
         animation: rainbowbackground 20s ease infinite;
         animation-fill-mode: forwards;
         -webkit-app-region: drag;
+
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
     }
 
     h2 {
         padding: 0;
         margin: 0;
-        position: fixed;
+        /* position: fixed;
         top: 30%;
         left: 50%;
-        transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%); */
     }
 
     form {
-        position: fixed;
-        bottom: -10%;
-        left: 50%;
+        /* position: fixed; */
+        /* bottom: -10%; */
+        /* left: 50%; */
         width: 100%;
-        transform: translate(-50%, -50%);
+        /* transform: translate(-50%, -50%); */
         -webkit-app-region: no-drag;
     }
 
@@ -73,6 +76,8 @@
         padding: 15px;
         width: auto;
         margin: 5px;
+        margin-top: 20px;
+        margin-bottom: 0px;
         font-family: system, -apple-system, '.SFNSText-Regular', 'SF UI Text', 'Lucida Grande', 'Segoe UI', Ubuntu, Cantarell, sans-serif;
         border-radius: 15px;
         transition: 0.1 ease-in-out;
@@ -87,12 +92,119 @@
     #button:active {
         opacity: 0;
     }
+
+    input {
+        color: white;
+        background: unset;
+        text-align: center;
+        outline: none;
+        border-radius: 5px;
+        border: white solid 2px;
+        font-size: 1.3em;
+    }
+
+    button {
+        color: white;
+        /* width: 200px; */
+        width: auto;
+        height: 40px;
+        background: linear-gradient(200deg, #00ff00, #00adff, #ff0000);
+        background-size: 2000% 2000%;
+        animation: rainbowbackground 20s ease infinite;
+        animation-fill-mode: forwards;
+        -webkit-text-fill-color: initial;
+        font-size: 25px;
+        margin: 0px;
+        border: 0px;
+        transition-duration: 0.3s;
+        -webkit-app-region: no-drag;
+    }
+
+    button:hover {
+        background: linear-gradient(200deg, #00ff0036, #00aeff25, #ff000059);
+        background-size: 2000% 2000%;
+        animation: rainbowbackground 20s ease infinite;
+        animation-fill-mode: forwards;
+    }
+
+    button:active {
+        background: linear-gradient(200deg, #00ff00, #00ff00, #00ff00);
+        background-size: 2000% 2000%;
+        animation: rainbowbackground 20s ease infinite;
+        animation-fill-mode: forwards;
+    }
+
+    .topBar {
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        width: 100vw;
+        height: var(--windowBarHeight);
+        background: #00233a;
+        z-index: 9999;
+        -webkit-app-region: drag;
+        display: flex;
+        justify-content: center;
+        vertical-align: middle;
+        text-align: center;
+        align-content: center;
+    }
+
+    .topBar #exitbutton {
+        background: rgb(165, 46, 46);
+        height: var(--windowBarHeight);
+        position: absolute;
+        right: 0px;
+        top: 0px;
+        width: 50px;
+    }
+
+    .topBar #exitbutton:hover {
+        background: rgb(216, 26, 26);
+    }
+
+    .topBar #exitbutton:focus {
+        outline: none;
+    }
+
+    .topBar #topBarClose {
+        background: #002b47;
+        height: var(--windowBarHeight);
+        position: absolute;
+        right: 50px;
+        top: 0px;
+        width: 50px;
+    }
+
+    .topBar #topBarClose:hover {
+        background: #003d66;
+    }
+
+    .topBar #topBarClose:focus {
+        outline: none;
+    }
+
+    .topBar p {
+        margin: auto;
+        color: #ffffff70;
+        user-select: none;
+        font-size: 0.6em;
+    }
 </style>
 
+<script>if (typeof module === 'object') { window.module = module; module = undefined; }</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <script>if (window.module) module = window.module</script>
 <script>const { ipcRenderer } = require('electron')</script>
 
-<h2>To be able to receive discord notifications DiscordChroma needs your discord client id to login.</h2>
+<div class="topBar">
+    <p>DiscordChroma - Login</p>
+    <button id="exitbutton" title="exit DiscordChroma">X</button>
+</div>
+
+<h2>Discord application credentials</h2>
+
+<p>To be able to receive discord notifications DiscordChroma needs your discord client id to login.</p>
 
 <p>If you don't have a client id yet, <a id="link" href="#">click here to get one</a></p>
 
@@ -117,7 +229,7 @@
         //         window.close();
         //     }, 500);
         // });
-        if(clientId && clientSecret) {
+        if (clientId && clientSecret) {
             ipcRenderer.send('asynchronous-message', 'setting-client-id', clientId)
             ipcRenderer.send('asynchronous-message', 'setting-client-secret', clientSecret)
             window.close()
@@ -125,6 +237,11 @@
             alert('Both client id and secret are required')
         }
     }
+
+    $("#exitbutton").click(function () {
+        ipcRenderer.send('asynchronous-message', "exitapp")
+        window.close()
+    })
 </script>
 
 <form onsubmit="storelogin()">

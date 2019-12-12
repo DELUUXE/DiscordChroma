@@ -21,6 +21,7 @@ const DiscordRPC = require("discord-rpc")
 let client
 var DiscordRP = null;
 
+let isClosing = false
 let win = null;
 let tray = null;
 var debugerror = 0;
@@ -183,7 +184,7 @@ app.on('ready', function () {
                 } else {
                     let login = new BrowserWindow({
                         width: 1000,
-                        height: 600,
+                        height: 700,
                         show: false,
                         frame: false,
                         resizable: false,
@@ -195,9 +196,24 @@ app.on('ready', function () {
                     login.show()
                     login.on('closed', () => {
                         if (config.clientID && config.clientSecret) {
-                            initDiscord()
+                            if (!isClosing) {
+                                initDiscord()
+                            }
                         } else {
-                            login.show()
+                            if (!isClosing) {
+                                login = new BrowserWindow({
+                                    width: 1000,
+                                    height: 700,
+                                    show: false,
+                                    frame: false,
+                                    resizable: false,
+                                    webPreferences: {
+                                        nodeIntegration: true
+                                    }
+                                })
+                                login.loadURL(path.join('file://', __dirname, '/login.html'))
+                                login.show()
+                            }
                         }
                     })
                 }
@@ -424,6 +440,7 @@ ipcMain.on('asynchronous-message', (event, arg, arg1) => {
                 // handle error
             });
     } else if (arg == "exitapp") {
+        isClosing = true
         setTimeout(() => {
             log.info("closing DiscordChroma")
             const DiscordRPend = childProcess.fork(path.join(__dirname, '/DiscordRP-end.js'))
