@@ -47,7 +47,8 @@
     "electron-remote": "^1.2.0",
     "electron-updater": "^4.2.0",
     "node-fetch": "^2.0.0",
-    "node-notifier": "^5.4.3"
+    "node-notifier": "^5.4.3",
+    "open": "^7.0.0"
   },
   "devDependencies": {
     "electron": "^7.1.3",
