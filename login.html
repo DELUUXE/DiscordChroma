@@ -1,0 +1,138 @@
+<style>
+    @font-face {
+        font-family: 'font1';
+        src: url('zrnic.ttf');
+    }
+
+
+    @keyframes rainbowbackground {
+        0% {
+            background-position: 90% 0%
+        }
+
+        50% {
+            background-position: 0% 85%
+        }
+
+        100% {
+            background-position: 90% 0%
+        }
+    }
+
+    html {
+        /*-webkit-app-region: drag;*/
+    }
+
+    body {
+        font-family: system, -apple-system, '.SFNSText-Regular', 'SF UI Text', 'Lucida Grande', 'Segoe UI', Ubuntu, Cantarell, sans-serif;
+        color: #fff;
+        text-align: center;
+        font-size: 30px;
+        background: linear-gradient(200deg, #00ff00, #00adff, #ff0000);
+        background-size: 2000% 2000%;
+
+        animation: rainbowbackground 20s ease infinite;
+        animation-fill-mode: forwards;
+        -webkit-app-region: drag;
+    }
+
+    h2 {
+        padding: 0;
+        margin: 0;
+        position: fixed;
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    form {
+        position: fixed;
+        bottom: -10%;
+        left: 50%;
+        width: 100%;
+        transform: translate(-50%, -50%);
+        -webkit-app-region: no-drag;
+    }
+
+    a {
+        text-decoration: none;
+        color: #ffffff;
+        font-family: system, -apple-system, '.SFNSText-Regular', 'SF UI Text', 'Lucida Grande', 'Segoe UI', Ubuntu, Cantarell, sans-serif;
+        -webkit-app-region: no-drag;
+    }
+
+    #button {
+        display: inline-block;
+        border-radius: 4px;
+        background-color: Transparent;
+        /*background-color: (rgba(0, 0, 0, 100));*/
+        border: 5px solid #ffffff;
+        color: #ffffff;
+        text-align: center;
+        font-size: 40px;
+        padding: 15px;
+        width: auto;
+        margin: 5px;
+        font-family: system, -apple-system, '.SFNSText-Regular', 'SF UI Text', 'Lucida Grande', 'Segoe UI', Ubuntu, Cantarell, sans-serif;
+        border-radius: 15px;
+        transition: 0.1 ease-in-out;
+        -webkit-app-region: no-drag;
+    }
+
+    #button:hover {
+        color: #00ff00;
+        border: 5px solid #00ff00;
+    }
+
+    #button:active {
+        opacity: 0;
+    }
+</style>
+
+<script>if (window.module) module = window.module</script>
+<script>const { ipcRenderer } = require('electron')</script>
+
+<h2>To be able to receive discord notifications DiscordChroma needs your discord client id to login.</h2>
+
+<p>If you don't have a client id yet, <a id="link" href="#">click here to get one</a></p>
+
+<script>
+    var open = require("open")
+    document.getElementById("link").addEventListener("click", () => {
+        open("https://github.com/DELUUXE/DiscordChroma#howtomakeadiscordapplication")
+    })
+</script>
+
+<script>
+    function storelogin() {
+        // var fs = require('fs');
+        const clientId = document.getElementById("clientIdInput").value
+        const clientSecret = document.getElementById("clientSecretInput").value
+        // fs.writeFile("login.txt", token, function (err) {
+        //     if (err) {
+        //         return console.log(err);
+        //     }
+        //     console.log("The file was saved!")
+        //     setTimeout(function () {
+        //         window.close();
+        //     }, 500);
+        // });
+        if(clientId && clientSecret) {
+            ipcRenderer.send('asynchronous-message', 'setting-client-id', clientId)
+            ipcRenderer.send('asynchronous-message', 'setting-client-secret', clientSecret)
+            window.close()
+        } else {
+            alert('Both client id and secret are required')
+        }
+    }
+</script>
+
+<form onsubmit="storelogin()">
+    please enter your discord application / client id here:<br>
+    <input id="clientIdInput" type="text" size="40" name="clientId">
+    <br>
+    please enter your discord application/client secret here:<br>
+    <input id="clientSecretInput" type="text" size="40" name="clientSecret">
+    <br>
+    <a id="button" href="javascript:storelogin();" onclick="this.style.opacity = '0'">Confirm</a>
+</form>

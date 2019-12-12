@@ -15,12 +15,11 @@ var shell = require('electron').shell;
 const { ipcMain } = require('electron');
 const { session } = require('electron');
 var AutoLaunch = require('auto-launch');
-var childProcess = require('child_process');
+var childProcess = require('child_process')
 const DiscordRPC = require("discord-rpc")
 
+let client
 var DiscordRP = null;
-
-clientID = '653623540649820181'
 
 let win = null;
 let tray = null;
@@ -106,8 +105,8 @@ app.on('ready', function () {
 
         log.info("starting DiscordChroma");
         //show discordchroma rich presence
-        /*var invoked = false;
-        DiscordRP = childProcess.fork(path.join(__dirname, '/DiscordRP.js'));*/
+        /*var invoked = false;*/
+        DiscordRP = childProcess.fork(path.join(__dirname, '/DiscordRP-start.js'))
         //show splash/loading screen
         win = new BrowserWindow({ width: 1000, height: 600, frame: false, show: false });
         win.loadURL(path.join('file://', __dirname, '/main.html'));
@@ -117,18 +116,35 @@ app.on('ready', function () {
             { label: 'Close' },
         ]);
         tray.setToolTip('DiscordChroma (click to open settings)');
-        //tray.setContextMenu(contextMenu);
+        // tray.setContextMenu(contextMenu);
         tray.on('click', () => {
+            DiscordRPsettings = childProcess.fork(path.join(__dirname, '/DiscordRP-settings.js'))
             let settingswin = new BrowserWindow({
                 width: 1000,
                 height: 600,
                 frame: false,
-                resizable: false,
+                resizable: true,
+                minHeight: 600,
+                minWidth: 1000,
                 webPreferences: {
                     nodeIntegration: true
                 }
             })
-            settingswin.loadURL(path.join('file://', __dirname, '/settings.html'));
+            settingswin.loadURL(path.join('file://', __dirname, '/settings.html'))
+            settingswin.on('closed', () => {
+                DiscordRPsettings.kill()
+                var notifier = new WindowsToaster({
+                    withFallback: false, // Fallback to Growl or Balloons?
+                })
+                notifier.notify({
+                    title: 'Running in the background',
+                    message: 'To open the settings, click on the taskbar icon',
+                    icon: path.join(app.getPath(`userData`), 'logo.png'),
+                    sound: false, // Bool | String (as defined by http://msdn.microsoft.com/en-us/library/windows/apps/hh761492.aspx)
+                    wait: true, // Bool. Wait for User Action against Notification or times out
+                    appID: "com.deluuxe.DiscordChroma",
+                })
+            })
             /*var AutoLauncher = new AutoLaunch({
                 name: 'DiscordChroma'
             });
@@ -155,22 +171,45 @@ app.on('ready', function () {
         //
         win.on("ready-to-show", () => {
             win.show();
-            //show startup animation on razerchroma
+            //show startup animation on razer chroma
             startupAnimation();
             setTimeout(function () {
                 //hide loading/splash window
-                win.hide();
-                //start auth process
-                auth()
+                DiscordRP.kill('SIGINT')
+                win.hide()
+                if (config.clientID && config.clientSecret) {
+                    //start discord init process
+                    initDiscord()
+                } else {
+                    let login = new BrowserWindow({
+                        width: 1000,
+                        height: 600,
+                        show: false,
+                        frame: false,
+                        resizable: false,
+                        webPreferences: {
+                            nodeIntegration: true
+                        }
+                    })
+                    login.loadURL(path.join('file://', __dirname, '/login.html'))
+                    login.show()
+                    login.on('closed', () => {
+                        if (config.clientID && config.clientSecret) {
+                            initDiscord()
+                        } else {
+                            login.show()
+                        }
+                    })
+                }
             }, 6000);
         });
     }
 });
 
 
-// auth function
-function auth() {
-    const client = new DiscordRPC.Client({ transport: "ipc" })
+// initDiscord function
+function initDiscord() {
+    client = new DiscordRPC.Client({ transport: "ipc" })
 
     client.on('ready', () => {
         log.info(`Logged in as ${client.user.username}#${client.user.discriminator}`);
@@ -190,16 +229,34 @@ function auth() {
             function (error, response) {
                 log.info(response);
                 if (response == "the user clicked on the toast.") {
+                    DiscordRPsettings = childProcess.fork(path.join(__dirname, '/DiscordRP-settings.js'))
                     let settingswin = new BrowserWindow({
                         width: 1000,
                         height: 600,
                         frame: false,
-                        resizable: false,
+                        resizable: true,
+                        minHeight: 600,
+                        minWidth: 1000,
                         webPreferences: {
                             nodeIntegration: true
                         }
-                    });
-                    settingswin.loadURL(path.join('file://', __dirname, '/settings.html'));
+                    })
+                    settingswin.loadURL(path.join('file://', __dirname, '/settings.html'))
+                    settingswin.on('closed', () => {
+                        DiscordRPsettings.kill('SIGINT')
+                        var notifier = new WindowsToaster({
+                            withFallback: false, // Fallback to Growl or Balloons?
+                        })
+                        notifier.notify({
+                            title: 'Connected to discord',
+                            message: 'running in the background',
+                            icon: path.join(app.getPath(`userData`), 'logo.png'),
+                            sound: false, // Bool | String (as defined by http://msdn.microsoft.com/en-us/library/windows/apps/hh761492.aspx)
+                            wait: true, // Bool. Wait for User Action against Notification or times out
+                            timeout: 5,
+                            appID: "com.deluuxe.DiscordChroma",
+                        })
+                    })
                     /*var AutoLauncher = new AutoLaunch({
                         name: 'DiscordChroma'
                     });
@@ -246,7 +303,7 @@ function auth() {
                 }
             }
 
-            console.log('new message', message)
+            // console.log('new message', message)
         })
     })
 
@@ -280,20 +337,73 @@ function auth() {
     });
     // ---------------------------------------- END discord.js ERROR section -------------------------------- \\
 
-    client.login({ clientId: clientID, scopes: ['identify', 'rpc.notifications.read', 'rpc'], redirectUri: 'http://localhost:1608/rzr-discord-chroma-callback' }).catch((e) => {
+    authDiscord()
+}
+
+function authDiscord() {
+    client.login({ clientId: config.clientID, scopes: ['identify', 'rpc.notifications.read', 'rpc'], clientSecret: config.clientSecret, redirectUri: 'http://localhost:1608/rzr-discord-chroma-callback' }).catch((e) => {
         log.error(e);
-        let errorwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
-        errorwin.loadURL(path.join('file://', __dirname, '/error.html'));
-        errorwin.on('closed', function () {
-            app.exit()
-        })
+
+        if (e.message.includes('access_denied')) {
+            var notifier = new WindowsToaster({
+                withFallback: false, // Fallback to Growl or Balloons?
+            })
+
+            //show error notification
+            notifier.notify({
+                title: 'Unable to connect to discord',
+                message: 'click here to try again\nOr check if your client id and secret are still correct in the DiscordChroma settings',
+                icon: path.join(app.getPath(`userData`), 'logo.png'),
+                sound: true, // Bool | String (as defined by http://msdn.microsoft.com/en-us/library/windows/apps/hh761492.aspx)
+                wait: true, // Bool. Wait for User Action against Notification or times out
+                appID: "com.deluuxe.DiscordChroma",
+            }, (err, response) => {
+                if (err) {
+                    let errorwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
+                    errorwin.loadURL(path.join('file://', __dirname, '/error.html'));
+                    errorwin.on('closed', function () {
+                        app.exit()
+                    })
+                    return
+                }
+                if (response == 'the user clicked on the toast.') {
+                    authDiscord()
+                }
+            })
+        }
     })
 }
 
+ipcMain.on('synchronous-message', (event, arg, arg1) => {
+    //data requests
+    if (arg == 'requestConfig') {
+        event.returnValue = config
+    }
+})
 
 ipcMain.on('asynchronous-message', (event, arg, arg1) => {
+    //functions
     if (arg == "msgcolor") {
         log.info("changed messagecolor to " + arg1);
+    } else if (arg == "restart") {
+        log.info("restart requested");
+        app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) })
+
+        log.info("closing DiscordChroma");
+        //show thx window
+        let thxwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
+        thxwin.loadURL(path.join('file://', __dirname, '/thx.html'));
+        tray.destroy();
+        //plays shutdown animation and exit's app at ending
+        shutdownAnimation();
+    } else if (arg == "setting-client-id") {
+        log.info("changed client id to " + arg1)
+        config.clientID = arg1
+        fs.writeFileSync(path.join(app.getPath(`userData`), 'config.json'), JSON.stringify(config))
+    } else if (arg == "setting-client-secret") {
+        log.info("changed client secret")
+        config.clientSecret = arg1
+        fs.writeFileSync(path.join(app.getPath(`userData`), 'config.json'), JSON.stringify(config))
     } else if (arg == "toggleAutoStart") {
         var AutoLauncher = new AutoLaunch({
             name: 'DiscordChroma'
@@ -314,17 +424,20 @@ ipcMain.on('asynchronous-message', (event, arg, arg1) => {
                 // handle error
             });
     } else if (arg == "exitapp") {
-        log.info("closing DiscordChroma");
-        //show thx window
-        let thxwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
-        thxwin.loadURL(path.join('file://', __dirname, '/thx.html'));
-        tray.destroy();
-        //plays shutdown animation and exit's app at ending
-        shutdownAnimation();
+        setTimeout(() => {
+            log.info("closing DiscordChroma")
+            const DiscordRPend = childProcess.fork(path.join(__dirname, '/DiscordRP-end.js'))
+            //show thx window
+            let thxwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
+            thxwin.loadURL(path.join('file://', __dirname, '/thx.html'));
+            tray.destroy();
+            //plays shutdown animation and exit's app at ending
+            shutdownAnimation(DiscordRPend);
+        }, 500)
     }
 });
 
-async function shutdownAnimation() {
+async function shutdownAnimation(DiscordRPend) {
     let instance = await chroma.Instance();
     var b = 0;
     for (g = 255; g > 125; g--) {
@@ -342,6 +455,9 @@ async function shutdownAnimation() {
         await sleep(8);
     }
     setTimeout(function () {
+        if (DiscordRPend) {
+            DiscordRPend.kill('SIGINT')
+        }
         instance.destroy();
         app.exit();
     }, 2300);
