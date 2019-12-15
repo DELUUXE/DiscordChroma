@@ -17,7 +17,8 @@
             "ia32"
           ]
         }
-      ]
+      ],
+      "files":["!.vscode"]
     },
     "publish": [
       {
