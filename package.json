@@ -36,7 +36,9 @@
     "start": "electron .",
     "package:mac": "electron-builder --mac",
     "package:win": "electron-builder --win",
-    "publish:win": "electron-builder --win -p always"
+    "package": "electron-builder --win",
+    "publish:win": "electron-builder --win -p always",
+    "publish": "electron-builder --win -p always"
   },
   "dependencies": {
     "@chroma-cloud/chromajs": "^0.1.21",
