@@ -4,7 +4,7 @@ const client = new RPC.Client({ transport: 'ipc' })
 client.on('ready', () => {
     client.setActivity({
         state: 'By DELUUXE',
-        details: 'integration for Razer Chroma (unofficial)',
+        details: 'Discord integration for Razer Chroma (unofficial)',
         state: 'Closing...',
         largeImageKey: 'discordchroma',
         largeImageDetails: "DiscordChroma",
