@@ -76,6 +76,40 @@ function sleep(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
 
+// ------------------------------- define repeating windows ----------------------------- \\
+
+function openSettingsWin() {
+    DiscordRPsettings = childProcess.fork(path.join(__dirname, '/discord-rich-presence/DiscordRP-settings.js'))
+    let settingswin = new BrowserWindow({
+        width: 1000,
+        height: 600,
+        frame: false,
+        resizable: true,
+        minHeight: 600,
+        minWidth: 1000,
+        webPreferences: {
+            nodeIntegration: true
+        }
+    })
+    settingswin.loadURL(path.join('file://', __dirname, '/settings.html'))
+    settingswin.on('closed', () => {
+        DiscordRPsettings.kill()
+        if (!isClosing) {
+            var notifier = new WindowsToaster({
+                withFallback: false, // Fallback to Growl or Balloons?
+            })
+            notifier.notify({
+                title: 'Running in the background',
+                message: 'To open the settings, click on the taskbar icon',
+                icon: path.join(app.getPath(`userData`), 'logo.png'),
+                sound: false, // Bool | String (as defined by http://msdn.microsoft.com/en-us/library/windows/apps/hh761492.aspx)
+                wait: true, // Bool. Wait for User Action against Notification or times out
+                appID: "com.deluuxe.DiscordChroma",
+            })
+        }
+    })
+}
+
 // ------------------------------------ start program ----------------------------------- \\
 
 //when the program is successfully started
@@ -107,47 +141,52 @@ app.on('ready', function () {
         log.info("starting DiscordChroma");
         //show discordchroma rich presence
         /*var invoked = false;*/
-        DiscordRP = childProcess.fork(path.join(__dirname, '/DiscordRP-start.js'))
+        DiscordRP = childProcess.fork(path.join(__dirname, '/discord-rich-presence/DiscordRP-start.js'))
         //show splash/loading screen
         win = new BrowserWindow({ width: 1000, height: 600, frame: false, show: false });
         win.loadURL(path.join('file://', __dirname, '/main.html'));
         //makes tray icon for closing and managing the program
-        tray = new Tray(path.join(__dirname, '/img/icon.ico'));
+        tray = new Tray(path.join(__dirname, '/img/icon.ico'))
+
+        const openSettingsTrayClickHandler = () => {
+            openSettingsWin()
+        }
+        const restartTrayClickHandler = () => {
+            log.info("restart requested")
+            isClosing = true
+            app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) })
+
+            log.info("closing DiscordChroma")
+            //show thx window
+            let thxwin = new BrowserWindow({ width: 1000, height: 600, frame: false })
+            thxwin.loadURL(path.join('file://', __dirname, '/thx.html'))
+            tray.destroy()
+            //plays shutdown animation and exit's app at ending
+            shutdownAnimation()
+        }
+        const exitTrayClickHandler = () => {
+            isClosing = true
+            setTimeout(() => {
+                log.info("closing DiscordChroma")
+                const DiscordRPend = childProcess.fork(path.join(__dirname, '/discord-rich-presence/DiscordRP-end.js'))
+                //show thx window
+                let thxwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
+                thxwin.loadURL(path.join('file://', __dirname, '/thx.html'));
+                tray.destroy();
+                //plays shutdown animation and exit's app at ending
+                shutdownAnimation(DiscordRPend);
+            }, 500)
+        }
+
         const contextMenu = Menu.buildFromTemplate([
-            { label: 'Close' },
-        ]);
-        tray.setToolTip('DiscordChroma (click to open settings)');
-        // tray.setContextMenu(contextMenu);
+            { label: 'Settings', click: openSettingsTrayClickHandler },
+            { label: 'Restart', click: restartTrayClickHandler },
+            { label: 'Exit', click: exitTrayClickHandler },
+        ])
+        tray.setToolTip('DiscordChroma (click to open settings)')
+        tray.setContextMenu(contextMenu)
         tray.on('click', () => {
-            DiscordRPsettings = childProcess.fork(path.join(__dirname, '/DiscordRP-settings.js'))
-            let settingswin = new BrowserWindow({
-                width: 1000,
-                height: 600,
-                frame: false,
-                resizable: true,
-                minHeight: 600,
-                minWidth: 1000,
-                webPreferences: {
-                    nodeIntegration: true
-                }
-            })
-            settingswin.loadURL(path.join('file://', __dirname, '/settings.html'))
-            settingswin.on('closed', () => {
-                DiscordRPsettings.kill()
-                if (!isClosing) {
-                    var notifier = new WindowsToaster({
-                        withFallback: false, // Fallback to Growl or Balloons?
-                    })
-                    notifier.notify({
-                        title: 'Running in the background',
-                        message: 'To open the settings, click on the taskbar icon',
-                        icon: path.join(app.getPath(`userData`), 'logo.png'),
-                        sound: false, // Bool | String (as defined by http://msdn.microsoft.com/en-us/library/windows/apps/hh761492.aspx)
-                        wait: true, // Bool. Wait for User Action against Notification or times out
-                        appID: "com.deluuxe.DiscordChroma",
-                    })
-                }
-            })
+            openSettingsWin()
             /*var AutoLauncher = new AutoLaunch({
                 name: 'DiscordChroma'
             });
@@ -171,7 +210,7 @@ app.on('ready', function () {
                 DiscordRP = null;
             });*/
         });
-        //
+
         win.on("ready-to-show", () => {
             win.show();
             //show startup animation on razer chroma
@@ -247,36 +286,7 @@ function initDiscord() {
             function (error, response) {
                 log.info(response);
                 if (response == "the user clicked on the toast.") {
-                    DiscordRPsettings = childProcess.fork(path.join(__dirname, '/DiscordRP-settings.js'))
-                    let settingswin = new BrowserWindow({
-                        width: 1000,
-                        height: 600,
-                        frame: false,
-                        resizable: true,
-                        minHeight: 600,
-                        minWidth: 1000,
-                        webPreferences: {
-                            nodeIntegration: true
-                        }
-                    })
-                    settingswin.loadURL(path.join('file://', __dirname, '/settings.html'))
-                    settingswin.on('closed', () => {
-                        DiscordRPsettings.kill('SIGINT')
-                        if (!isClosing) {
-                            var notifier = new WindowsToaster({
-                                withFallback: false, // Fallback to Growl or Balloons?
-                            })
-                            notifier.notify({
-                                title: 'Connected to discord',
-                                message: 'running in the background',
-                                icon: path.join(app.getPath(`userData`), 'logo.png'),
-                                sound: false, // Bool | String (as defined by http://msdn.microsoft.com/en-us/library/windows/apps/hh761492.aspx)
-                                wait: true, // Bool. Wait for User Action against Notification or times out
-                                timeout: 5,
-                                appID: "com.deluuxe.DiscordChroma",
-                            })
-                        }
-                    })
+                    openSettingsWin()
                     /*var AutoLauncher = new AutoLaunch({
                         name: 'DiscordChroma'
                     });
@@ -453,7 +463,7 @@ ipcMain.on('asynchronous-message', (event, arg, arg1) => {
         isClosing = true
         setTimeout(() => {
             log.info("closing DiscordChroma")
-            const DiscordRPend = childProcess.fork(path.join(__dirname, '/DiscordRP-end.js'))
+            const DiscordRPend = childProcess.fork(path.join(__dirname, '/discord-rich-presence/DiscordRP-end.js'))
             //show thx window
             let thxwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
             thxwin.loadURL(path.join('file://', __dirname, '/thx.html'));
