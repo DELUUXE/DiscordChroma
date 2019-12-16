@@ -1,4 +1,4 @@
-const { ChromaApp, Color, Key, BcaAnimation } = require('@chroma-cloud/chromajs');
+const { ChromaApp, Color, Key, BcaAnimation, Device: ChromaDevices } = require('@chroma-cloud/chromajs');
 const electron = require('electron');
 const { Menu, Tray } = require('electron');
 const { ipcRenderer } = require('electron');
@@ -48,11 +48,14 @@ if (!fs.existsSync(path.join(app.getPath(`userData`), 'config.json'))) {
 } else {
     config = JSON.parse(fs.readFileSync(path.join(app.getPath(`userData`), 'config.json')));
 }
+function saveConfig(_config) {
+    fs.writeFileSync(path.join(app.getPath(`userData`), 'config.json'), JSON.stringify(_config ? _config : config))
+}
 
 //initiate log.txt
 log.transports.file.appName = 'DiscordChroma';
 log.transports.file.level = 'info';
-log.transports.file.format = '{h}:{i}:{s}:{ms} {text}';
+log.transports.file.format = '{h}:{i}:{s}:{ms} | {text}';
 log.transports.file.maxSize = 5 * 1024 * 1024;
 log.transports.file.file = path.join(app.getPath(`userData`), 'log.txt');
 log.transports.file.streamConfig = { flags: 'w' };
@@ -60,7 +63,21 @@ log.transports.file.stream = fs.createWriteStream(path.join(app.getPath(`userDat
 
 
 // Register the app
-const chroma = new ChromaApp("DiscordChroma", "discord integration for razer chroma", "DELUUXE", "info@deluuxe.nl");
+const chroma = new ChromaApp(
+    'DiscordChroma', // app name
+    'discord integration for razer chroma (unofficial)', // description
+    'DELUUXE', // author
+    'https://deluuxe.nl/discordchroma', // email
+    [
+        ChromaDevices.ChromaLink,
+        ChromaDevices.Headset,
+        ChromaDevices.Keypad,
+        ChromaDevices.Keyboard,
+        ChromaDevices.Mouse,
+        ChromaDevices.Mousepad
+    ],
+    'application'
+)
 
 /*chroma.Instance().then((instance) => {
     //instance.playAnimation(new BcaAnimation("BcaAnimations/animation.bca"));
@@ -370,7 +387,7 @@ function initDiscord() {
     authDiscord()
 }
 
-function authDiscord() {
+function fullAuthDiscord() {
     client.login({ clientId: config.clientID, scopes: ['identify', 'rpc.notifications.read', 'rpc'], clientSecret: config.clientSecret, redirectUri: 'http://localhost:1608/rzr-discord-chroma-callback' }).catch((e) => {
         log.error(e);
 
@@ -407,7 +424,67 @@ function authDiscord() {
                 app.exit()
             })
         }
+    }).then(clientInfo => {
+        config.accessToken = clientInfo.accessToken
+        saveConfig()
     })
+}
+
+function authDiscord() {
+    const prevAccessToken = config.accessToken
+    if (prevAccessToken) {
+        client.login({ clientId: config.clientID, scopes: ['identify', 'rpc.notifications.read', 'rpc'], clientSecret: config.clientSecret, redirectUri: 'http://localhost:1608/rzr-discord-chroma-callback', accessToken: prevAccessToken }).catch(e => {
+            if (e && e.message) {
+                log.error(e)
+
+                if (e.message.includes('Invalid access token')) {
+                    console.error('accesstoken invalid, performing a full auth')
+                    fullAuthDiscord()
+                } else if (e.message.includes('access_denied')) {
+                    var notifier = new WindowsToaster({
+                        withFallback: false, // Fallback to Growl or Balloons?
+                    })
+
+                    //show error notification
+                    notifier.notify({
+                        title: 'Unable to connect to discord',
+                        message: 'click here to try again\nOr check if your client id and secret are still correct in the DiscordChroma settings',
+                        icon: path.join(app.getPath(`userData`), 'logo.png'),
+                        sound: true, // Bool | String (as defined by http://msdn.microsoft.com/en-us/library/windows/apps/hh761492.aspx)
+                        wait: true, // Bool. Wait for User Action against Notification or times out
+                        appID: "com.deluuxe.DiscordChroma",
+                    }, (err, response) => {
+                        if (err) {
+                            let errorwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
+                            errorwin.loadURL(path.join('file://', __dirname, '/error.html'));
+                            errorwin.on('closed', function () {
+                                app.exit()
+                            })
+                            return
+                        }
+                        if (response == 'the user clicked on the toast.') {
+                            authDiscord()
+                        }
+                    })
+                } else {
+                    let errorwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
+                    errorwin.loadURL(path.join('file://', __dirname, '/error.html'));
+                    errorwin.on('closed', function () {
+                        app.exit()
+                    })
+                }
+            } else {
+                log.error('A discord login error occurred, but there is no error message')
+                let errorwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
+                errorwin.loadURL(path.join('file://', __dirname, '/error.html'));
+                errorwin.on('closed', function () {
+                    app.exit()
+                })
+            }
+        })
+    } else {
+        fullAuthDiscord()
+    }
 }
 
 ipcMain.on('synchronous-message', (event, arg, arg1) => {
@@ -435,11 +512,11 @@ ipcMain.on('asynchronous-message', (event, arg, arg1) => {
     } else if (arg == "setting-client-id") {
         log.info("changed client id to " + arg1)
         config.clientID = arg1
-        fs.writeFileSync(path.join(app.getPath(`userData`), 'config.json'), JSON.stringify(config))
+        saveConfig()
     } else if (arg == "setting-client-secret") {
         log.info("changed client secret")
         config.clientSecret = arg1
-        fs.writeFileSync(path.join(app.getPath(`userData`), 'config.json'), JSON.stringify(config))
+        saveConfig()
     } else if (arg == "toggleAutoStart") {
         var AutoLauncher = new AutoLaunch({
             name: 'DiscordChroma'
@@ -449,11 +526,11 @@ ipcMain.on('asynchronous-message', (event, arg, arg1) => {
                 if (isEnabled) {
                     AutoLauncher.disable();
                     config.autoStart = false;
-                    fs.writeFileSync(path.join(app.getPath(`userData`), 'config.json'), JSON.stringify(config))
+                    saveConfig()
                 } else {
                     AutoLauncher.enable();
                     config.autoStart = true;
-                    fs.writeFileSync(path.join(app.getPath(`userData`), 'config.json'), JSON.stringify(config))
+                    saveConfig()
                 }
             })
             .catch(function (err) {
@@ -537,8 +614,9 @@ async function dmAnimation() {
             await sleep(1);
         }
     }
-    instance.destroy();
-    spamProtection = false;
+    await instance.destroy()
+    await sleep(250)
+    spamProtection = false
 }
 
 
@@ -567,8 +645,9 @@ async function messageAnimation() {
             await sleep(1);
         }
     }
-    instance.destroy();
-    spamProtection = false;
+    await instance.destroy()
+    await sleep(250)
+    spamProtection = false
 }
 
 //when a "global" error occurs
