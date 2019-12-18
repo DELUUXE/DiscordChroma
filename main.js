@@ -33,6 +33,11 @@ var color_var = 16777215;
 
 var spamProtection = false;
 
+//make sure that userdata folder is present
+if (!fs.existsSync(app.getPath(`userData`))) {
+    fs.mkdirSync(app.getPath(`userData`))
+}
+
 //save icon to userData for later reference
 if (!fs.existsSync(path.join(app.getPath(`userData`), 'logo.png'))) {
     fs.writeFileSync(path.join(app.getPath(`userData`), 'logo.png'), fs.readFileSync(path.join(__dirname, 'img/logo.png')))
