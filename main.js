@@ -1,22 +1,16 @@
-const { ChromaApp, Color, Key, BcaAnimation, Device: ChromaDevices } = require('@chroma-cloud/chromajs');
-const electron = require('electron');
-const { Menu, Tray } = require('electron');
-const { ipcRenderer } = require('electron');
-const BrowserWindow = electron.BrowserWindow;
-const app = electron.app;
-const autoUpdater = require("electron-updater").autoUpdater;
-autoUpdater.logger = require("electron-log");
+const { ChromaApp, Color, Key, BcaAnimation, Device: ChromaDevices } = require('@chroma-cloud/chromajs')
+const { app, Menu, Tray, BrowserWindow, ipcMain } = require('electron')
+const autoUpdater = require('electron-updater').autoUpdater
+autoUpdater.logger = require('electron-log')
 autoUpdater.logger.transports.file.level = "info"
-const path = require('path');
-var fs = require('fs');
-const WindowsToaster = require('node-notifier').WindowsToaster;
-var log = require('electron-log');
-var shell = require('electron').shell;
-const { ipcMain } = require('electron');
-const { session } = require('electron');
-var AutoLaunch = require('auto-launch');
+const path = require('path')
+var fs = require('fs')
+const WindowsToaster = require('node-notifier').WindowsToaster
+var log = require('electron-log')
+var AutoLaunch = require('auto-launch')
 var childProcess = require('child_process')
-const DiscordRPC = require("discord-rpc")
+const DiscordRPC = require('discord-rpc')
+const processExists = require('process-exists')
 
 let client
 var DiscordRP = null;
@@ -30,6 +24,15 @@ var warn1 = 0;
 var urError = 0;
 var ECONNRESET = 0;
 var color_var = 16777215;
+const discordProcessNames = [
+    'Discord.exe',
+    'DiscordPTB.exe',
+    'DiscordCanary.exe',
+]
+
+const AutoLauncher = new AutoLaunch({
+    name: 'DiscordChroma'
+})
 
 var spamProtection = false;
 
@@ -209,29 +212,42 @@ app.on('ready', function () {
         tray.setContextMenu(contextMenu)
         tray.on('click', () => {
             openSettingsWin()
-            /*var AutoLauncher = new AutoLaunch({
-                name: 'DiscordChroma'
-            });
-            AutoLauncher.isEnabled()
-            .then(function(isEnabled){
-                setTimeout(() => {
-                    if(isEnabled){
-                        settingswin.webContents.send('autoStartToggled', "Turn on")
-                    } else {
-                        settingswin.webContents.send('autoStartToggled', "Turn off")
-                    }
-                }, 1000);
-            })*/
-            //starting discordRP
-            /*if(!DiscordRP) {
-                DiscordRP = childProcess.fork(path.join(__dirname, '/DiscordRP.js'));
+        })
+
+        const { powerMonitor } = require('electron')
+
+        // pause app when pc is suspended
+        powerMonitor.on('suspend', () => {
+            console.log('The system is going to sleep')
+            if (client) {
+                client.destroy()
+                client = null
             }
-            settingswin.on('closed', function () {
-                //stop discord rich presence
-                DiscordRP.kill('SIGINT');
-                DiscordRP = null;
-            });*/
-        });
+        })
+
+        // resume app (reconnect to discord) when pc is resumed
+        powerMonitor.on('resume', () => {
+            console.log('The system is resuming from sleep')
+            if (isDiscordRunning && !waitingForDiscordStart && !client) {
+                initDiscord()
+            }
+        })
+
+        powerMonitor.on('lock-screen', () => {
+            console.log('The system is getting locked')
+            if (client) {
+                client.destroy()
+                client = null
+            }
+        })
+
+
+        powerMonitor.on('unlock-screen', () => {
+            console.log('The system is getting unlocked')
+            if (isDiscordRunning && !waitingForDiscordStart && !client) {
+                initDiscord()
+            }
+        })
 
         win.on("ready-to-show", () => {
             win.show();
@@ -285,9 +301,63 @@ app.on('ready', function () {
     }
 });
 
+let isDiscordRunning = true
+let waitingForDiscordStart = true
+
+setInterval(async () => {
+    if (!waitingForDiscordStart) {
+        let processes = await processExists.filterExists(discordProcessNames).catch((err) => {
+            log.error(err)
+            let errorwin = new BrowserWindow({ width: 1000, height: 600, frame: false })
+            errorwin.loadURL(path.join('file://', __dirname, '/error.html'))
+            errorwin.on('closed', function () {
+                app.exit()
+            })
+        })
+        isDiscordRunning = processes.length > 0 ? true : false
+        if (isDiscordRunning == false && client) {
+            console.log('discord got closed')
+            await client.destroy()
+            client = null
+        } else if (isDiscordRunning && !waitingForDiscordStart && !client) {
+            console.log('discord got opened again after it was closed')
+            initDiscord()
+        }
+    }
+}, 5000)
 
 // initDiscord function
-function initDiscord() {
+async function initDiscord() {
+    if (!isDiscordRunning && waitingForDiscordStart) { return }
+    waitingForDiscordStart = true
+    let processes = await processExists.filterExists(discordProcessNames).catch((err) => {
+        log.error(err)
+        let errorwin = new BrowserWindow({ width: 1000, height: 600, frame: false })
+        errorwin.loadURL(path.join('file://', __dirname, '/error.html'))
+        errorwin.on('closed', function () {
+            app.exit()
+        })
+    })
+
+    while (processes.length == 0) {
+        isDiscordRunning = false
+        waitingForDiscordStart = true
+        await sleep(2000)
+        processes = await processExists.filterExists(discordProcessNames).catch((err) => {
+            log.error(err)
+            let errorwin = new BrowserWindow({ width: 1000, height: 600, frame: false })
+            errorwin.loadURL(path.join('file://', __dirname, '/error.html'))
+            errorwin.on('closed', function () {
+                app.exit()
+            })
+        })
+    }
+
+    console.log('discord is running')
+
+    isDiscordRunning = true
+    waitingForDiscordStart = false
+
     client = new DiscordRPC.Client({ transport: "ipc" })
 
     client.on('ready', () => {
@@ -295,42 +365,19 @@ function initDiscord() {
         var notifier = new WindowsToaster({
             withFallback: false, // Fallback to Growl or Balloons?
         });
-        //show running notification
+        //show running notification / connected to discord notification
         notifier.notify(
             {
-                title: 'DiscordChroma is running in the background',
+                title: 'Connected to discord',
                 message: 'To open the main menu click here or on the tray icon in the taskbar',
                 icon: path.join(app.getPath(`userData`), 'logo.png'),
-                sound: true, // Bool | String (as defined by http://msdn.microsoft.com/en-us/library/windows/apps/hh761492.aspx)
+                sound: false, // Bool | String (as defined by http://msdn.microsoft.com/en-us/library/windows/apps/hh761492.aspx)
                 wait: true, // Bool. Wait for User Action against Notification or times out
                 appID: "com.deluuxe.DiscordChroma",
             },
             function (error, response) {
-                log.info(response);
                 if (response == "the user clicked on the toast.") {
                     openSettingsWin()
-                    /*var AutoLauncher = new AutoLaunch({
-                        name: 'DiscordChroma'
-                    });
-                    AutoLauncher.isEnabled()
-                    .then(function(isEnabled){
-                        setTimeout(() => {
-                            if(isEnabled){
-                                settingswin.webContents.send('autoStartToggled', "Turn on")
-                            } else {
-                                settingswin.webContents.send('autoStartToggled', "Turn off")
-                            }
-                        }, 1000);
-                    })*/
-                    /*settingswin.on('closed', function () {
-                        //stop discord rich presence
-                        DiscordRP.kill('SIGINT');
-                        DiscordRP = null;
-                    });*/
-                } else {
-                    //stop discord rich presence
-                    /*DiscordRP.kill('SIGINT');
-                    DiscordRP = null;*/
                 }
             }
         )
@@ -365,7 +412,7 @@ function initDiscord() {
         if (error1 == 1) {
             log.info("There has been an error!");
             log.error(err);
-            //show succesfully started window
+            //show error window
             let errorwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
             errorwin.loadURL(path.join('file://', __dirname, '/error.html'));
             errorwin.on('closed', function () {
@@ -379,7 +426,7 @@ function initDiscord() {
         warn1 = warn1 + 1;
         if (warn1 == 1) {
             log.warn("There has been a warning/error!");
-            //show succesfully started window
+            //show error window
             let errorwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
             errorwin.loadURL(path.join('file://', __dirname, '/error.html'));
             errorwin.on('closed', function () {
@@ -497,6 +544,9 @@ ipcMain.on('synchronous-message', (event, arg, arg1) => {
     if (arg == 'requestConfig') {
         event.returnValue = config
     }
+    if (arg == 'requestAutoLaunchConfig') {
+        event.returnValue = AutoLauncher.isEnabled()
+    }
 })
 
 ipcMain.on('asynchronous-message', (event, arg, arg1) => {
@@ -522,25 +572,16 @@ ipcMain.on('asynchronous-message', (event, arg, arg1) => {
         log.info("changed client secret")
         config.clientSecret = arg1
         saveConfig()
-    } else if (arg == "toggleAutoStart") {
-        var AutoLauncher = new AutoLaunch({
-            name: 'DiscordChroma'
-        });
-        AutoLauncher.isEnabled()
-            .then(function (isEnabled) {
-                if (isEnabled) {
-                    AutoLauncher.disable();
-                    config.autoStart = false;
-                    saveConfig()
-                } else {
-                    AutoLauncher.enable();
-                    config.autoStart = true;
-                    saveConfig()
-                }
-            })
-            .catch(function (err) {
-                // handle error
-            });
+    } else if (arg == "setAutoLaunchConfig") {
+        if (arg1) {
+            AutoLauncher.enable()
+            config.autoStart = true
+            saveConfig()
+        } else {
+            AutoLauncher.disable()
+            config.autoStart = false
+            saveConfig()
+        }
     } else if (arg == "exitapp") {
         isClosing = true
         setTimeout(() => {

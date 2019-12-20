@@ -1,6 +1,6 @@
 {
   "name": "DiscordChroma",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "description": "Discord Chroma",
   "main": "main.js",
   "author": "DELUUXE",
@@ -53,7 +53,8 @@
     "electron-updater": "^4.2.0",
     "node-fetch": "^2.0.0",
     "node-notifier": "^5.4.3",
-    "open": "^7.0.0"
+    "open": "^7.0.0",
+    "process-exists": "^3.1.0"
   },
   "devDependencies": {
     "electron": "^6.1.6",
