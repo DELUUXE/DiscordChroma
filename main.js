@@ -58,7 +58,7 @@ function saveConfig(_config) {
 //initiate log.txt
 log.transports.file.appName = 'DiscordChroma';
 log.transports.file.level = 'info';
-log.transports.file.format = '{h}:{i}:{s}:{ms} | {text}';
+log.transports.file.format = '[{h}:{i}:{s}:{ms}] [{level}] {text}';
 log.transports.file.maxSize = 5 * 1024 * 1024;
 log.transports.file.file = path.join(app.getPath(`userData`), 'log.txt');
 log.transports.file.streamConfig = { flags: 'w' };
@@ -435,8 +435,8 @@ async function initDiscord() {
 }
 
 function fullAuthDiscord() {
-    client.login({ clientId: config.clientID, scopes: ['identify', 'rpc.notifications.read', 'rpc'], clientSecret: config.clientSecret, redirectUri: 'http://localhost:1608/rzr-discord-chroma-callback' }).catch((e) => {
-        log.error(e);
+    client.login({ clientId: config.clientID, scopes: ['identify', 'rpc.notifications.read', 'rpc'], clientSecret: config.clientSecret, redirectUri: 'http://localhost:1608/rzr-discord-chroma-callback' }).catch(async (e) => {
+        log.error(e)
 
         if (e.message.includes('access_denied')) {
             var notifier = new WindowsToaster({
@@ -464,6 +464,11 @@ function fullAuthDiscord() {
                     authDiscord()
                 }
             })
+        } else if (e.message.includes('Could not connect')) {
+            log.warn('Discord was not yet loaded or was not running, atempting again in 2 seconds')
+            await sleep(2000)
+            initDiscord()
+            return
         } else {
             let errorwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
             errorwin.loadURL(path.join('file://', __dirname, '/error.html'));
@@ -480,13 +485,18 @@ function fullAuthDiscord() {
 function authDiscord() {
     const prevAccessToken = config.accessToken
     if (prevAccessToken) {
-        client.login({ clientId: config.clientID, scopes: ['identify', 'rpc.notifications.read', 'rpc'], clientSecret: config.clientSecret, redirectUri: 'http://localhost:1608/rzr-discord-chroma-callback', accessToken: prevAccessToken }).catch(e => {
+        client.login({ clientId: config.clientID, scopes: ['identify', 'rpc.notifications.read', 'rpc'], clientSecret: config.clientSecret, redirectUri: 'http://localhost:1608/rzr-discord-chroma-callback', accessToken: prevAccessToken }).catch(async e => {
             if (e && e.message) {
                 log.error(e)
 
                 if (e.message.includes('Invalid access token')) {
                     console.error('accesstoken invalid, performing a full auth')
                     fullAuthDiscord()
+                } else if (e.message.includes('Could not connect')) {
+                    log.warn('Discord was not yet loaded or was not running, atempting again in 2 seconds')
+                    await sleep(2000)
+                    initDiscord()
+                    return
                 } else if (e.message.includes('access_denied')) {
                     var notifier = new WindowsToaster({
                         withFallback: false, // Fallback to Growl or Balloons?
