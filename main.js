@@ -567,7 +567,7 @@ ipcMain.on('asynchronous-message', (event, arg, arg1) => {
         log.info("changed client secret")
         config.clientSecret = arg1
         saveConfig()
-    } else if (arg == "setAutoLaunchConfig") {
+    } else if (arg == "setAutoLaunchState") {
         if (arg1) {
             app.setLoginItemSettings({
                 openAtLogin: true,
