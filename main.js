@@ -7,7 +7,6 @@ const path = require('path')
 var fs = require('fs')
 const WindowsToaster = require('node-notifier').WindowsToaster
 var log = require('electron-log')
-var AutoLaunch = require('auto-launch')
 var childProcess = require('child_process')
 const DiscordRPC = require('discord-rpc')
 const processExists = require('process-exists')
@@ -30,10 +29,6 @@ const discordProcessNames = [
     'DiscordCanary.exe',
 ]
 
-const AutoLauncher = new AutoLaunch({
-    name: 'DiscordChroma'
-})
-
 var spamProtection = false;
 
 //make sure that userdata folder is present
@@ -50,7 +45,7 @@ if (!fs.existsSync(path.join(app.getPath(`userData`), 'logo.png'))) {
 var config;
 if (!fs.existsSync(path.join(app.getPath(`userData`), 'config.json'))) {
     config = {
-        "autoStart": false
+        autoStart: false,
     }
     fs.writeFileSync(path.join(app.getPath(`userData`), 'config.json'), JSON.stringify(config))
 } else {
@@ -545,7 +540,7 @@ ipcMain.on('synchronous-message', (event, arg, arg1) => {
         event.returnValue = config
     }
     if (arg == 'requestAutoLaunchConfig') {
-        event.returnValue = AutoLauncher.isEnabled()
+        event.returnValue = config.autoStart
     }
 })
 
@@ -574,11 +569,18 @@ ipcMain.on('asynchronous-message', (event, arg, arg1) => {
         saveConfig()
     } else if (arg == "setAutoLaunchConfig") {
         if (arg1) {
-            AutoLauncher.enable()
+            app.setLoginItemSettings({
+                openAtLogin: true,
+                args: [
+                    '--process-start-args', `"--hidden"`
+                ]
+            })
             config.autoStart = true
             saveConfig()
         } else {
-            AutoLauncher.disable()
+            app.setLoginItemSettings({
+                openAtLogin: false,
+            })
             config.autoStart = false
             saveConfig()
         }
