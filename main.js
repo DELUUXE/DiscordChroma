@@ -531,12 +531,10 @@ function authDiscord() {
                     })
                 }
             } else {
-                log.error('A discord login error occurred, but there is no error message')
-                let errorwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
-                errorwin.loadURL(path.join('file://', __dirname, '/error.html'));
-                errorwin.on('closed', function () {
-                    app.exit()
-                })
+                log.warn('A discord login error occurred, but there is no error message, attempting again in 2 seconds')
+                await sleep(2000)
+                initDiscord()
+                return
             }
         })
     } else {
