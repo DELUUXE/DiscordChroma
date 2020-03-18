@@ -50,6 +50,7 @@
     "electron-log": "^4.0.0",
     "electron-remote": "^1.2.0",
     "electron-updater": "^4.2.0",
+    "minimist": "^1.2.5",
     "node-fetch": "^2.0.0",
     "node-notifier": "^5.4.3",
     "open": "^7.0.0",
