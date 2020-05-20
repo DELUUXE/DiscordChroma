@@ -1,5 +1,5 @@
 const { ChromaApp, Color, Key, BcaAnimation, Device: ChromaDevices } = require('@chroma-cloud/chromajs')
-const { app, Menu, Tray, BrowserWindow, ipcMain } = require('electron')
+const { app, Menu, Tray, BrowserWindow, ipcMain, shell } = require('electron')
 const autoUpdater = require('electron-updater').autoUpdater
 autoUpdater.logger = require('electron-log')
 autoUpdater.logger.transports.file.level = "info"
@@ -10,6 +10,12 @@ var log = require('electron-log')
 var childProcess = require('child_process')
 const DiscordRPC = require('discord-rpc')
 const processExists = require('process-exists')
+const express = require('express')
+const axios = require('axios').default
+const querystring = require('querystring')
+
+const webserver = express()
+const port = 1608
 
 let client
 var DiscordRP = null;
@@ -435,6 +441,7 @@ async function initDiscord() {
 }
 
 function fullAuthDiscord() {
+    // client.login({ clientId: config.clientID, scopes: ['identify', 'messages.read', 'rpc', 'rpc.notifications.read'], clientSecret: config.clientSecret }).catch(async (e) => {
     client.login({ clientId: config.clientID, scopes: ['identify', 'rpc.notifications.read', 'rpc'], clientSecret: config.clientSecret, redirectUri: 'http://localhost:1608/rzr-discord-chroma-callback' }).catch(async (e) => {
         log.error(e)
 
@@ -464,6 +471,43 @@ function fullAuthDiscord() {
                     authDiscord()
                 }
             })
+        } else if (e.message.includes('Unknown error occurred')) {
+            log.warn('Discord has returned Error: 1000 "Unknown error occurred", attempting web login.')
+            shell.openExternal(`https://discordapp.com/api/oauth2/authorize?client_id=${config.clientID}&redirect_uri=http%3A%2F%2Flocalhost%3A1608%2Frzr-discord-chroma-callback&response_type=code&scope=rpc.notifications.read%20rpc%20identify`)
+            webserver.get('/rzr-discord-chroma-callback', (req, res) => {
+                if (req.query.code) {
+
+                    const data = {
+                        code: req.query.code,
+                        'client_id': config.clientID,
+                        'grant_type': 'access_token',
+                        'redirect_uri': 'http%3A%2F%2Flocalhost%3A1608%2Frzr-discord-chroma-callback'
+                    }
+                    const options = {
+                        method: 'POST',
+                        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+                        data: querystring.stringify(data),
+                        url: 'https://discordapp.com/api/oauth2/token'
+                    }
+                    axios(options)
+                        .then(function (response) {
+                            console.log(response);
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                        });
+                } else if (req.query['access_token']) {
+                    config.accessToken = req.query['access_token']
+                    saveConfig()
+                    authDiscord()
+                } else {
+                    log.warn('Request didn\'t contain access-token or auth code, ignoring...')
+                }
+                res.send('OK')
+                webserver.destroy()
+            })
+            webserver.listen(port, () => log.info(`webserver listening on port ${port}`))
+            return
         } else if (e.message.includes('Could not connect')) {
             log.warn('Discord was not yet loaded or was not running, atempting again in 2 seconds')
             await sleep(2000)
@@ -477,8 +521,13 @@ function fullAuthDiscord() {
             })
         }
     }).then(clientInfo => {
-        config.accessToken = clientInfo.accessToken
-        saveConfig()
+        if (clientInfo && clientInfo.accessToken) {
+            config.accessToken = clientInfo.accessToken
+            saveConfig()
+        } else {
+            if (client && client.clientId) return
+            log.warn('no client info received, cannot login, there is likely more logging above')
+        }
     })
 }
 
@@ -531,12 +580,10 @@ function authDiscord() {
                     })
                 }
             } else {
-                log.error('A discord login error occurred, but there is no error message')
-                let errorwin = new BrowserWindow({ width: 1000, height: 600, frame: false });
-                errorwin.loadURL(path.join('file://', __dirname, '/error.html'));
-                errorwin.on('closed', function () {
-                    app.exit()
-                })
+                log.warn('A discord login error occurred, but there is no error message, attempting again in 2 seconds')
+                await sleep(2000)
+                initDiscord()
+                return
             }
         })
     } else {
