@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@chroma-cloud/chromajs": "^0.1.21",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "discord-rich-presence": "0.0.8",
     "discord-rpc": "github:DELUUXE/RPC",
     "electron-log": "^4.0.0",
