@@ -385,7 +385,8 @@ async function initDiscord() {
 
         //RPC notification event
         client.subscribe('NOTIFICATION_CREATE', (message) => {
-            if (message.message.hasOwnProperty('author_color')) { //guild message
+            const regex = /\((\#\S+), ?([\S\s]+)\)/g
+            if (regex.test(message.title)) { //guild message
                 if (spamProtection == false) {
                     log.info('NEW MESSAGE, title: ' + message.title + ".");
                     spamProtection = true;
