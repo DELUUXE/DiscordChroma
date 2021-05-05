@@ -33,6 +33,7 @@ const discordProcessNames = [
     'Discord.exe',
     'DiscordPTB.exe',
     'DiscordCanary.exe',
+    'DiscordDevelopment.exe',
 ]
 
 var spamProtection = false;
@@ -76,7 +77,7 @@ const chroma = new ChromaApp(
     'DiscordChroma', // app name
     'discord integration for razer chroma (unofficial)', // description
     'DELUUXE', // author
-    'https://deluuxe.nl/discordchroma', // email
+    'https://deluuxe.dev/discordchroma', // email
     [
         ChromaDevices.ChromaLink,
         ChromaDevices.Headset,
@@ -114,7 +115,8 @@ function openSettingsWin() {
         minHeight: 600,
         minWidth: 1000,
         webPreferences: {
-            nodeIntegration: true
+            nodeIntegration: true,
+            contextIsolation: false,
         }
     })
     settingswin.loadURL(path.join('file://', __dirname, '/settings.html'))
@@ -318,8 +320,10 @@ setInterval(async () => {
         isDiscordRunning = processes.length > 0 ? true : false
         if (isDiscordRunning == false && client) {
             console.log('discord got closed')
-            await client.destroy()
-            client = null
+            if (client) {
+                client.destroy()
+                client = null
+            }
         } else if (isDiscordRunning && !waitingForDiscordStart && !client) {
             console.log('discord got opened again after it was closed')
             initDiscord()
@@ -421,8 +425,16 @@ async function initDiscord() {
                 app.exit();
             });
         }
-    });
+    })
 
+    client.on('disconnected', (e) => {
+        log.info('discord disconnected', e)
+        isDiscordRunning = false
+        if (client) {
+            client.destroy()
+            client = null
+        }
+    })
 
     client.on('warn', () => {
         warn1 = warn1 + 1;
@@ -435,7 +447,7 @@ async function initDiscord() {
                 app.exit();
             });
         }
-    });
+    })
     // ---------------------------------------- END discord.js ERROR section -------------------------------- \\
 
     authDiscord()
@@ -592,14 +604,8 @@ function authDiscord() {
     }
 }
 
-ipcMain.on('synchronous-message', (event, arg, arg1) => {
-    //data requests
-    if (arg == 'requestConfig') {
-        event.returnValue = config
-    }
-    if (arg == 'requestAutoLaunchConfig') {
-        event.returnValue = config.autoStart
-    }
+ipcMain.handle('settings-win-init', async (event) => {
+    return config
 })
 
 ipcMain.on('asynchronous-message', (event, arg, arg1) => {
@@ -691,7 +697,7 @@ async function startupAnimation() {
         instance.setAll(new Color(r, g, b));
         await instance.send();
         b++;
-        await sleep(16);
+        await sleep(8);
     }
     for (r; r < 125; r++) {
         instance.setAll(new Color(r, g, b));
@@ -699,7 +705,7 @@ async function startupAnimation() {
         if (!g <= 0) {
             g--;
         }
-        await sleep(16);
+        await sleep(8);
     }
     instance.destroy();
 }
