@@ -708,25 +708,29 @@ async function startupAnimation() {
         }
         await sleep(8);
     }
+    instance.setAll(new Color(0, 0, 0))
+    await instance.send()
     instance.destroy();
 }
 
 async function dmAnimation() {
-    let instance = await chroma.Instance();
-    var r = 0;
-    var i = 0;
+    let instance = await chroma.Instance()
+    var r = 0
+    var i = 0
     for (i; i < 2; i++) {
         for (r; r < 255; r++) {
-            instance.setAll(new Color(r, 0, 0));
-            await instance.send();
-            await sleep(1);
+            instance.setAll(new Color(r, 0, 0))
+            instance.send()
+            await sleep(2)
         }
         for (r; r > 0; r--) {
-            instance.setAll(new Color(r, 0, 0));
-            await instance.send();
-            await sleep(1);
+            instance.setAll(new Color(r, 0, 0))
+            instance.send()
+            await sleep(2)
         }
     }
+    instance.setAll(new Color(0, 0, 0))
+    await instance.send()
     await instance.destroy()
     await sleep(250)
     spamProtection = false
@@ -740,24 +744,31 @@ async function messageAnimation() {
     var i = 0;
     for (i; i < 3; i++) {
         for (r; r < 255; r++) {
-            instance.Mouse.setAll(new Color(0, 0, r));
-            instance.Mousepad.setAll(new Color(0, 0, r));
-            instance.ChromaLink.setAll(new Color(0, 0, r));
-            instance.Headset.setAll(new Color(0, 0, r));
-            instance.Keypad.setAll(new Color(0, 0, r));
-            await instance.send();
+            if (r % 10 === 0) {
+                instance.Mouse.setAll(new Color(0, 0, r));
+                instance.Mousepad.setAll(new Color(0, 0, r));
+                instance.ChromaLink.setAll(new Color(0, 0, r));
+                instance.Headset.setAll(new Color(0, 0, r));
+                instance.Keypad.setAll(new Color(0, 0, r));
+                instance.send();
+            }
             await sleep(1);
         }
         for (r; r > 0; r--) {
-            instance.Mouse.setAll(new Color(0, 0, r));
-            instance.Mousepad.setAll(new Color(0, 0, r));
-            instance.ChromaLink.setAll(new Color(0, 0, r));
-            instance.Headset.setAll(new Color(0, 0, r));
-            instance.Keypad.setAll(new Color(0, 0, r));
-            await instance.send();
+            if (r % 10 === 0) {
+                instance.Mouse.setAll(new Color(0, 0, r));
+                instance.Mousepad.setAll(new Color(0, 0, r));
+                instance.ChromaLink.setAll(new Color(0, 0, r));
+                instance.Headset.setAll(new Color(0, 0, r));
+                instance.Keypad.setAll(new Color(0, 0, r));
+                instance.send();
+            }
             await sleep(1);
         }
     }
+    instance.setAll(new Color(0, 0, 0))
+    await instance.send()
+    await sleep(10)
     await instance.destroy()
     await sleep(250)
     spamProtection = false
