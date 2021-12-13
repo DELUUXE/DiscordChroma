@@ -1,4 +1,4 @@
-const { ChromaApp, Color, Key, BcaAnimation, Device: ChromaDevices } = require('@chroma-cloud/chromajs')
+const { ChromaApp, Color, Key, BcaAnimation, DeviceType } = require('@chroma-cloud/chromajs')
 const { app, Menu, Tray, BrowserWindow, ipcMain, shell } = require('electron')
 const autoUpdater = require('electron-updater').autoUpdater
 autoUpdater.logger = require('electron-log')
@@ -79,14 +79,16 @@ const chroma = new ChromaApp(
     'DELUUXE', // author
     'https://deluuxe.dev/discordchroma', // email
     [
-        ChromaDevices.ChromaLink,
-        ChromaDevices.Headset,
-        ChromaDevices.Keypad,
-        ChromaDevices.Keyboard,
-        ChromaDevices.Mouse,
-        ChromaDevices.Mousepad
+        DeviceType.ChromaLink,
+        DeviceType.Headset,
+        DeviceType.Keypad,
+        DeviceType.Keyboard,
+        DeviceType.Mouse,
+        DeviceType.Mousepad
     ],
-    'application'
+    'application',
+    true, // secure
+    true // ws
 )
 
 /*chroma.Instance().then((instance) => {
@@ -115,8 +117,7 @@ function openSettingsWin() {
         minHeight: 600,
         minWidth: 1000,
         webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
+            preload: path.join(__dirname, '/settings-preload.js')
         }
     })
     settingswin.loadURL(path.join('file://', __dirname, '/settings.html'))
@@ -605,7 +606,7 @@ function authDiscord() {
 }
 
 ipcMain.handle('settings-win-init', async (event) => {
-    return config
+    return JSON.stringify(config)
 })
 
 ipcMain.on('asynchronous-message', (event, arg, arg1) => {

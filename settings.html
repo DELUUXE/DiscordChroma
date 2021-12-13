@@ -188,12 +188,6 @@
     }
 </style>
 
-<!-- to make jquery work in electron -->
-<!-- <script>if (typeof module === 'object') { window.module = module; module = undefined; }</script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<script>if (window.module) module = window.module</script> -->
-<script>const { ipcRenderer } = require('electron')</script>
-
 <body>
     <div class="topBar">
         <p>DiscordChroma - Settings</p>
@@ -235,7 +229,7 @@
             </div>
             <h2>Animations</h2>
             <p>Options for this catogory are yet to come...</p>
-            <!--<p>Message alert color (hex color (without #)) (not working yet)</p>
+            <!-- <p>Message alert color (hex color (without #)) (not working yet)</p>
             <input type="text" value="ffffff" name="Message color" maxlength="6" id="colorpicker">
             <button id="confirmmsgcolor">Confirm color</button>
             <script>
@@ -247,26 +241,26 @@
                     var messagecolor = document.getElementById("colorpicker").value;
                     // ipcRenderer.send('asynchronous-message', "msgcolor", messagecolor);
                 });
-            </script>-->
+            </script> -->
             <div class="bottomButtons">
                 <button id="restartButton">Restart DiscordChroma</button>
             </div>
             <script>
                 document.querySelector('#exitbutton').addEventListener('click', function () {
-                    ipcRenderer.send('asynchronous-message', "exitapp")
+                    window.app.exit()
                     window.close()
                 });
                 document.querySelector('#topBarClose').addEventListener('click', function () {
                     window.close()
                 });
                 document.querySelector('#restartButton').addEventListener('click', function () {
-                    ipcRenderer.send('asynchronous-message', "restart")
+                    window.app.restart()
                     window.close()
                 });
                 document.querySelector('#updateClientId').addEventListener('click', function () {
                     const clientId = document.getElementById("clientIdInput").value
                     if (clientId) {
-                        ipcRenderer.send('asynchronous-message', 'setting-client-id', clientId)
+                        window.config.setClientId(clientId)
                     } else {
                         alert('Client id cannot be blank')
                     }
@@ -274,7 +268,7 @@
                 document.querySelector('#updateClientSecret').addEventListener('click', function () {
                     const clientSecret = document.getElementById("clientSecretInput").value
                     if (clientSecret) {
-                        ipcRenderer.send('asynchronous-message', 'setting-client-secret', clientSecret)
+                        window.config.setClientSecret(clientSecret)
                     } else {
                         alert('Client secret cannot be blank')
                     }
@@ -359,20 +353,21 @@
     }
 
     switchBtnLeft.addEventListener('click', function () {
-        ipcRenderer.send('asynchronous-message', 'setAutoLaunchState', true)
+        window.config.setAutoLaunchState(true)
         switchLeft();
     }, false);
 
     switchBtnRight.addEventListener('click', function () {
-        ipcRenderer.send('asynchronous-message', 'setAutoLaunchState', false)
+        window.config.setAutoLaunchState(false)
         switchRight();
     }, false);
 
     // receiving vars from main
-    let config = ipcRenderer.invoke('settings-win-init').then((config) => {
+    window.config.get('settings-win-init').then((_config) => {
+        const config = JSON.parse(_config);
         document.getElementById("clientIdInput").value = config.clientID
         document.getElementById("clientSecretInput").value = config.clientSecret
-        
+
         if (config.autoStart) {
             switchLeft()
         } else {
